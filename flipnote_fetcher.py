@@ -5,6 +5,7 @@ import urllib.request
 from html.parser import HTMLParser
 from pathlib import Path
 from sys import argv
+from os.path import isfile
 
 ARCHIVE_CDX_URL = "http://web.archive.org/cdx/search/cdx?matchType=prefix&filter=original:\S*.kwz$&output=json&url=jkz-dsidata.s3.amazonaws.com/kwz/{0}"
 ARCHIVE_RAW_DATA_URL = "http://web.archive.org/web/{0}id_/{1}"
@@ -98,7 +99,13 @@ if len(argv) == 3:
 
   for (i, flipnote_url) in enumerate(get_flipnote_urls(flipnote_list, column_order)):
     flipnote_filename = Path(flipnote_url).name
-    print('Downloading Flipnote {0} of {1}'.format(i + 1, num_flipnotes))
-    urllib.request.urlretrieve(flipnote_url, output_path.joinpath(flipnote_filename))
+    if (isfile(output_path.joinpath(flipnote_filename))):
+        print("Found existing file for Flipnote {0} of {1}".format(i + 1, num_flipnotes))
+    else:
+        print('Downloading Flipnote {0} of {1}'.format(i + 1, num_flipnotes))
+        try:
+            urllib.request.urlretrieve(flipnote_url, output_path.joinpath(flipnote_filename))
+        except urllib.error.HTTPError:
+            print("HTTP Error 404: Not Found for Flipnote {0}. Skipping.".format(i + 1))
 
   print('Done!')
